@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  client:
+    build:
+      context: ./client/
+    restart: unless-stopped
+    container_name: client
+    env_file: ./api/.env.local
+    ports:
+      - ${CLIENT_CONTAINER_PORT:-3001}:3000
+    command: npm run dev
+    volumes:
+      - ./client:/srv/client
+      - /srv/client/node_modules
+
+  api:
+    build:
+      context: ./api/
+    depends_on:
+      - mysql
+    restart: unless-stopped
+    container_name: api
+    env_file: ./api/.env.local
+    ports:
+      - ${API_CONTAINER_PORT:-81}:80
+    volumes:
+      - ./api:/srv/api
+      - ./.docker/symfony/log:/var/www/var/log
+      - ./.docker/apache/log:/var/log/apache2
+      - ./.docker/php/log:/app/var/logs:rw
+      - ./.docker/apache/vhost.conf:/etc/apache2/sites-available/000-default.conf
+      - ./.docker/php/docker-healthcheck.sh:/usr/local/bin/docker-healthcheck
+    healthcheck:
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+
+  mysql:
+    image: mysql:latest
+    restart: unless-stopped
+    env_file: ./api/.env.local
+    container_name: mysql
+    ports:
+      - ${MYSQL_CONTAINER_PORT:-3301}:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-database}
+      - MYSQL_USER=${MYSQL_USER:-user}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-root}
+    volumes:
+      - mysql:/var/lib/mysql
+      - ./.docker/mysql/config/mysql-docker.cnf:/etc/mysql/conf.d/mysql-docker.cnf:ro
+      - ./.docker/mysql/log/:/var/log/mysql:rw
+
+volumes:
+  mysql:
