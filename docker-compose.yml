@@ -5,7 +5,7 @@ services:
     build:
       context: ./client/
     restart: unless-stopped
-    container_name: client
+    container_name: ${CLIENT_CONTAINER_NAME:-client}
     env_file: ./api/.env.local
     ports:
       - ${CLIENT_CONTAINER_PORT:-3001}:3000
@@ -20,7 +20,7 @@ services:
     depends_on:
       - mysql
     restart: unless-stopped
-    container_name: api
+    container_name: ${API_CONTAINER_NAME:-api}
     env_file: ./api/.env.local
     ports:
       - ${API_CONTAINER_PORT:-81}:80
@@ -41,7 +41,7 @@ services:
     image: mysql:latest
     restart: unless-stopped
     env_file: ./api/.env.local
-    container_name: mysql
+    container_name: ${MYSQL_CONTAINER_NAME:-mysql}
     ports:
       - ${MYSQL_CONTAINER_PORT:-3301}:3306
     environment:
